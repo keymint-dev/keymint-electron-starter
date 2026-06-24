@@ -1,11 +1,12 @@
-import { machineIdSync } from 'node-machine-id';
+import { KeyMint } from 'keymint';
 
-const API_BASE = 'https://api.keymint.dev';
 const CLIENT_API_KEY = process.env.KEYMINT_CLIENT_API_KEY || '';
 const PRODUCT_ID = process.env.KEYMINT_PRODUCT_ID || '';
 
+const client = new KeyMint(CLIENT_API_KEY);
+
 export function getHostId(): string {
-  return machineIdSync();
+  return KeyMint.getOrCreateInstallationId();
 }
 
 export async function activateLicense(licenseKey: string): Promise<{
@@ -13,27 +14,18 @@ export async function activateLicense(licenseKey: string): Promise<{
   message: string;
 }> {
   try {
-    const response = await fetch(`${API_BASE}/key/activate`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CLIENT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        productId: PRODUCT_ID,
-        licenseKey,
-        hostId: getHostId(),
-      }),
+    const result = await client.activateKey({
+      productId: PRODUCT_ID,
+      licenseKey,
+      hostId: getHostId(),
     });
 
-    const result = await response.json();
-
-    if (response.ok && result.code === 0) {
+    if (result.code === 0) {
       return { success: true, message: result.message || 'License valid' };
     }
     return {
       success: false,
-      message: result.message || `Activation failed (HTTP ${response.status})`,
+      message: result.message || 'Activation failed',
     };
   } catch (error: any) {
     return {
@@ -45,21 +37,12 @@ export async function activateLicense(licenseKey: string): Promise<{
 
 export async function deactivateLicense(licenseKey: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE}/key/deactivate`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CLIENT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        productId: PRODUCT_ID,
-        licenseKey,
-        hostId: getHostId(),
-      }),
+    const result = await client.deactivateKey({
+      productId: PRODUCT_ID,
+      licenseKey,
+      hostId: getHostId(),
     });
-
-    const result = await response.json();
-    return response.ok && result.code === 0;
+    return result.code === 0;
   } catch {
     return false;
   }
@@ -67,21 +50,12 @@ export async function deactivateLicense(licenseKey: string): Promise<boolean> {
 
 export async function checkLicenseHealth(licenseKey: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE}/key/activate`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CLIENT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        productId: PRODUCT_ID,
-        licenseKey,
-        hostId: getHostId(),
-      }),
+    const result = await client.activateKey({
+      productId: PRODUCT_ID,
+      licenseKey,
+      hostId: getHostId(),
     });
-
-    const result = await response.json();
-    return response.ok && result.code === 0;
+    return result.code === 0;
   } catch {
     return false;
   }
