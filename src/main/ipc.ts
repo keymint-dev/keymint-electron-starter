@@ -1,25 +1,17 @@
 import { ipcMain } from 'electron';
-import Store from 'electron-store';
 import {
   activateLicense,
   deactivateLicense,
 } from './license';
-
-interface LicenseStore {
-  licenseKey?: string;
-  activated?: boolean;
-}
-
-const store = new Store<LicenseStore>({
-  name: 'license',
-  encryptionKey: 'electron-license-starter',
-});
+import { store, clearLicense } from './store';
+import { licenseEvents } from './events';
 
 ipcMain.handle('license:activate', async (_event, licenseKey: string) => {
   const result = await activateLicense(licenseKey);
   if (result.success) {
     store.set('licenseKey', licenseKey);
     store.set('activated', true);
+    licenseEvents.emit('activated');
   }
   return result;
 });
@@ -38,10 +30,7 @@ ipcMain.handle('license:deactivate', async () => {
   if (!key) return { success: false, message: 'No license found' };
 
   const success = await deactivateLicense(key);
-  if (success) {
-    store.delete('licenseKey');
-    store.delete('activated');
-  }
+  if (success) clearLicense();
   return { success, message: success ? 'Deactivated' : 'Failed' };
 });
 
