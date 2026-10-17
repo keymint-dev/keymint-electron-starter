@@ -23,13 +23,14 @@ export function getHostId(): string {
 
 /**
  * The SDK throws on any non-2xx response. 401 (invalid, expired, blocked or
- * not allowed on this device), 402 (vendor subscription lapsed) and 403
- * (activation limit reached) mean the license was rejected. Anything else —
- * no response, 429, 5xx — is transient and must not log the user out.
+ * not allowed on this device), 402 (vendor subscription lapsed), 403
+ * (activation limit reached) and 404 (product deleted or deactivated, or the
+ * license removed) mean the license was rejected. Anything else — no
+ * response, 429, 5xx — is transient and must not log the user out.
  */
 function isRejected(error: unknown): boolean {
   const status = (error as { status?: number } | null)?.status;
-  return status === 401 || status === 402 || status === 403;
+  return status === 401 || status === 402 || status === 403 || status === 404;
 }
 
 function errorMessage(error: unknown, fallback: string): string {
