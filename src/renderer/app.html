@@ -18,6 +18,15 @@
   <div class="container">
     <h1>License Activated</h1>
     <p>Your app is ready. Replace this page with your actual application.</p>
+    <p id="licenseInfo"></p>
   </div>
+  <script>
+    window.licenseAPI.getStatus().then((status) => {
+      if (status.mode === 'offline') {
+        document.getElementById('licenseInfo').textContent =
+          'Offline license, valid until ' + new Date(status.expiresAt).toLocaleDateString();
+      }
+    });
+  </script>
 </body>
 </html>

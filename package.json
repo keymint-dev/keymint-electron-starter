@@ -4,15 +4,16 @@
   "description": "Electron app with Keymint license activation pre-configured",
   "main": "dist/main/index.js",
   "scripts": {
-    "dev": "tsc && electron .",
-    "build": "tsc",
-    "package": "tsc && electron-builder",
-    "smoke": "node scripts/smoke.mjs"
+    "dev": "npm run build && electron .",
+    "build": "tsc && node scripts/copy-renderer.mjs",
+    "package": "npm run build && electron-builder",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "npm run build && node --test test/offline.test.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "electron-store": "^8.2.0",
-    "keymint": "^1.5.0"
+    "keymint": "^1.7.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",

@@ -2,7 +2,7 @@
 import 'dotenv/config';
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
-import './ipc';
+import { verifyStoredOffline } from './ipc';
 import { checkLicenseHealth } from './license';
 import { store, clearLicense } from './store';
 import { licenseEvents } from './events';
@@ -31,7 +31,7 @@ function createMainWindow() {
 function createActivationWindow() {
   activationWindow = new BrowserWindow({
     width: 480,
-    height: 360,
+    height: 440,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -53,16 +53,15 @@ licenseEvents.on('activated', () => {
 });
 
 // A rejected license (revoked, expired, over its device limit) sends the user
-// back to activation. Network failures keep the cached state.
+// back to activation. Network failures keep the cached state. Without an
+// online activation, an imported offline license is checked instead.
 async function revalidate(): Promise<boolean> {
   const licenseKey = store.get('licenseKey');
-  if (!licenseKey || store.get('activated') !== true) return false;
-
-  if ((await checkLicenseHealth(licenseKey)) === 'rejected') {
+  if (licenseKey && store.get('activated') === true) {
+    if ((await checkLicenseHealth(licenseKey)) !== 'rejected') return true;
     clearLicense();
-    return false;
   }
-  return true;
+  return verifyStoredOffline()?.ok === true;
 }
 
 app.whenReady().then(async () => {
@@ -88,7 +87,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    if (store.get('activated') === true) {
+    if (store.get('activated') === true || verifyStoredOffline()?.ok) {
       createMainWindow();
     } else {
       createActivationWindow();
