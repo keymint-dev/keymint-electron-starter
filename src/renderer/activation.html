@@ -26,6 +26,7 @@
       font-size: 0.875rem; cursor: pointer;
     }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button.secondary { background: #fff; color: #2563eb; border: 1px solid #d1d5db; margin-top: 1rem; }
     .status { margin-top: 0.75rem; font-size: 0.8rem; text-align: center; }
     .status.success { color: #16a34a; }
     .status.error { color: #dc2626; }
@@ -37,6 +38,8 @@
     <p class="desc">Enter your license key to unlock the app.</p>
     <input id="keyInput" type="text" placeholder="KM-XXXX-XXXX-XXXX" maxlength="64" />
     <button id="activateBtn">Activate</button>
+    <button id="importBtn" class="secondary">Import offline license (.lic)</button>
+    <input id="licFile" type="file" accept=".lic" hidden />
     <div id="status" class="status"></div>
   </div>
 
@@ -53,7 +56,26 @@
       if (status.licenseKey) {
         document.getElementById('keyInput').value = status.licenseKey;
       }
+      if (status.offlineError) {
+        document.getElementById('status').textContent = status.offlineError;
+        document.getElementById('status').className = 'status error';
+      }
     }
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('licFile').click();
+    });
+
+    document.getElementById('licFile').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      const statusEl = document.getElementById('status');
+      const result = await licenseAPI.importOffline(await file.text());
+      statusEl.textContent = result.message;
+      statusEl.className = result.success ? 'status success' : 'status error';
+      if (result.success) setTimeout(() => window.close(), 1500);
+    });
 
     document.getElementById('activateBtn').addEventListener('click', async () => {
       const btn = document.getElementById('activateBtn');

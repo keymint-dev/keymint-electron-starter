@@ -7,12 +7,13 @@
     "dev": "tsc && electron .",
     "build": "tsc",
     "package": "tsc && electron-builder",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "test": "tsc && node --test test/offline.test.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "electron-store": "^8.2.0",
-    "keymint": "^1.5.0"
+    "keymint": "^1.7.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",
